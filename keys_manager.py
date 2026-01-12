@@ -8,7 +8,7 @@ import json
 import os
 import secrets
 import string
-import hashlib
+import base64
 from pathlib import Path
 from cryptography.fernet import Fernet
 from cryptography.hazmat.primitives import hashes
@@ -35,11 +35,10 @@ class KeyManager:
     
     def _get_cipher(self, password: str, salt: bytes):
         """Get Fernet cipher from password"""
+        # Derive a 32-byte key using PBKDF2
         key = self._derive_key(password, salt)
-        fernet_key = hashlib.sha256(key).digest()
         # Fernet requires base64-encoded 32-byte key
-        import base64
-        fernet_key = base64.urlsafe_b64encode(fernet_key)
+        fernet_key = base64.urlsafe_b64encode(key)
         return Fernet(fernet_key)
     
     def _load_data(self):
@@ -66,8 +65,8 @@ class KeyManager:
     
     def generate_key(self, purpose: str, password: str) -> str:
         """Generate a secure 24-character key and store it encrypted"""
-        # Generate secure random key
-        alphabet = string.ascii_letters + string.digits + string.punctuation
+        # Generate secure random key with safe special characters
+        alphabet = string.ascii_letters + string.digits + '!@#$%^&*()-_=+[]{}|;:,.<>?'
         secure_key = ''.join(secrets.choice(alphabet) for _ in range(self.key_length))
         
         # Load existing data
@@ -88,7 +87,6 @@ class KeyManager:
         encrypted_key = cipher.encrypt(secure_key.encode())
         
         # Store encrypted key (as base64 string for JSON compatibility)
-        import base64
         data['keys'][purpose] = base64.b64encode(encrypted_key).decode('utf-8')
         
         # Save data
@@ -112,14 +110,15 @@ class KeyManager:
             raise ValueError("No keys stored yet")
         
         # Decrypt the key
-        import base64
         encrypted_key = base64.b64decode(data['keys'][purpose])
         
         cipher = self._get_cipher(password, data['salt'])
         try:
             decrypted_key = cipher.decrypt(encrypted_key)
             return decrypted_key.decode('utf-8')
-        except Exception:
+        except Exception as e:
+            # Fernet raises InvalidToken for decryption failures
+            # This typically means wrong password or corrupted data
             raise ValueError("Invalid password")
     
     def delete_key(self, purpose: str, password: str):

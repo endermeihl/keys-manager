@@ -106,7 +106,7 @@ Examples:
             password = getpass.getpass('Enter password to delete the key: ')
             
             # Confirm deletion
-            confirm = input(f"Are you sure you want to delete the key '{args.purpose}'? (yes/no): ")
+            confirm = input(f"Are you sure you want to delete the key '{args.purpose}'? Type 'yes' to confirm: ")
             if confirm.lower() != 'yes':
                 print("Deletion cancelled.")
                 sys.exit(0)
