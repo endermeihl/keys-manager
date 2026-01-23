@@ -4,96 +4,82 @@
 
 ## 功能特性
 
-1. **生成密钥**: 通过命令行生成24位安全密钥并加密保存到本地，生成时需要标记密钥作用
-2. **密码保护查看**: 只能通过命令行输入密码进行查看密钥
-3. **列出密钥用途**: 可以不需要密码查看有哪些作用的密钥
-4. **单个密钥查询**: 一次只能通过密码和作用查询一个密钥
-5. **删除密钥**: 可以通过密码删除密钥（不支持修改密钥）
+- **安全密钥生成**：生成 24 位高强度随机密钥（包含大小写字母、数字和特殊字符）
+- **加密存储**：使用 PBKDF2 + Fernet 对称加密算法保护密钥
+- **密码保护**：所有敏感操作需要密码验证
+- **分类管理**：通过用途标签管理多个密钥
 
-## 安装
-
-### 1. 安装依赖
+## 安装依赖
 
 ```bash
-pip install -r requirements.txt
+pip install cryptography
 ```
 
 ## 使用方法
 
-### 生成新密钥
+### 方式一：交互式 CLI（推荐）
+
+使用 `cli.py`，密码通过安全方式输入（不显示在屏幕上）：
 
 ```bash
-python cli.py generate --purpose "API密钥"
-```
+# 生成新密钥
+python cli.py generate --purpose "API Key"
 
-系统会提示输入密码（输入两次确认）。密钥生成后会显示一次，请妥善保存。
-
-### 列出所有密钥用途
-
-无需密码即可查看所有已存储的密钥用途：
-
-```bash
+# 列出所有密钥用途
 python cli.py list
+
+# 查看指定密钥
+python cli.py view --purpose "API Key"
+
+# 删除密钥
+python cli.py delete --purpose "API Key"
 ```
 
-### 查看指定密钥
+### 方式二：命令行参数（适合脚本集成）
 
-需要提供密码和密钥用途：
+使用 `main.py`，通过参数传递密码：
 
 ```bash
-python cli.py view --purpose "API密钥"
+# 查看帮助
+python main.py
+
+# 生成新密钥
+python main.py --action generate --purpose "API Key" --password "your_password"
+
+# 列出所有密钥用途
+python main.py --action list
+
+# 查看指定密钥
+python main.py --action view --purpose "API Key" --password "your_password"
+
+# 删除密钥
+python main.py --action delete --purpose "API Key" --password "your_password"
 ```
 
-系统会提示输入密码。
+### 可选参数
 
-### 删除密钥
+- `--storage`：指定存储文件路径（默认：`keys.enc`）
 
-需要提供密码确认删除：
+## 存储文件
 
-```bash
-python cli.py delete --purpose "API密钥"
-```
-
-系统会提示输入密码并要求确认删除操作。
+密钥以加密形式存储在 `keys.enc` 文件中（JSON 格式）。该文件包含：
+- 加密盐值（salt）
+- 加密后的密钥数据
 
 ## 安全说明
 
-- 所有密钥使用 Fernet (对称加密) 进行加密存储
-- 主密码通过 PBKDF2 进行密钥派生 (100,000 次迭代)
-- 密钥长度为 24 个字符，包含大小写字母、数字和特殊字符
-- 加密后的密钥存储在 `keys.enc` 文件中
-- 忘记密码将无法恢复密钥
+1. 请使用强密码保护您的密钥
+2. 妥善保管 `keys.enc` 文件
+3. 密钥生成后请立即保存，遗忘密码将无法恢复
+4. 使用交互式 CLI 可避免密码出现在命令行历史中
 
-## 示例
+## 项目结构
 
-```bash
-# 生成一个用于 GitHub API 的密钥
-$ python cli.py generate --purpose "GitHub API"
-Enter password to encrypt the key: 
-Confirm password: 
-✓ Key generated successfully!
-Purpose: GitHub API
-Key (24 characters): aB3$xY9#mK2@pL5^qR8*
-
-# 列出所有密钥用途
-$ python cli.py list
-Stored key purposes (1):
-  - GitHub API
-
-# 查看密钥
-$ python cli.py view --purpose "GitHub API"
-Enter password: 
-✓ Key retrieved successfully!
-Purpose: GitHub API
-Key: aB3$xY9#mK2@pL5^qR8*
-
-# 删除密钥
-$ python cli.py delete --purpose "GitHub API"
-Enter password to delete the key: 
-Are you sure you want to delete the key 'GitHub API'? (yes/no): yes
-✓ Key 'GitHub API' deleted successfully!
 ```
-
-## 许可证
-
-MIT License
+keys-manager/
+├── keys_manager.py   # 核心加密管理模块
+├── cli.py            # 交互式命令行界面
+├── main.py           # 参数式命令行入口
+├── keys.enc          # 加密存储文件（运行后生成）
+└── README.md
+```

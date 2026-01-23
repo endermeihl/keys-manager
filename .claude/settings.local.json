@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python -c \"from keys_manager import KeyManager; km = KeyManager\\(\\); print\\(''默认前缀:'', km.default_prefix\\); print\\(''密钥长度:'', km.key_length\\)\")",
+      "Bash(python:*)",
+      "Bash(del test_keys.enc test_keys2.enc)"
+    ]
+  }
+}

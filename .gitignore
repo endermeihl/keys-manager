@@ -208,3 +208,4 @@ __marimo__/
 
 # Keys Manager - encrypted key storage
 keys.enc
+.vscode

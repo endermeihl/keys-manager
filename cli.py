@@ -35,6 +35,7 @@ Examples:
     # Generate command
     generate_parser = subparsers.add_parser('generate', help='Generate a new secure key')
     generate_parser.add_argument('--purpose', required=True, help='Purpose/label for the key')
+    generate_parser.add_argument('--prefix', default='sk-', help='Key prefix (default: sk-)')
     generate_parser.add_argument('--storage', default='keys.enc', help='Storage file path (default: keys.enc)')
     
     # List command
@@ -75,10 +76,10 @@ Examples:
                 sys.exit(1)
             
             # Generate key
-            generated_key = km.generate_key(args.purpose, password)
+            generated_key = km.generate_key(args.purpose, password, prefix=args.prefix)
             print(f"✓ Key generated successfully!")
             print(f"Purpose: {args.purpose}")
-            print(f"Key (24 characters): {generated_key}")
+            print(f"Key: {generated_key}")
             print(f"\nIMPORTANT: Save this key securely. You'll need the password to view it again.")
         
         elif args.command == 'list':

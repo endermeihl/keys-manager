@@ -17,11 +17,12 @@ from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 
 class KeyManager:
     """Manages secure storage and retrieval of encrypted keys"""
-    
+
     def __init__(self, storage_file='keys.enc'):
         """Initialize the key manager with a storage file"""
         self.storage_file = Path(storage_file)
-        self.key_length = 24
+        self.key_length = 48  # Length of random part (excluding prefix)
+        self.default_prefix = 'sk-'
         
     def _derive_key(self, password: str, salt: bytes) -> bytes:
         """Derive encryption key from password using PBKDF2"""
@@ -63,11 +64,16 @@ class KeyManager:
         with open(self.storage_file, 'w') as f:
             json.dump(save_data, f, indent=2)
     
-    def generate_key(self, purpose: str, password: str) -> str:
-        """Generate a secure 24-character key and store it encrypted"""
-        # Generate secure random key with safe special characters
-        alphabet = string.ascii_letters + string.digits + '!@#$%^&*()-_=+[]{}|;:,.<>?'
-        secure_key = ''.join(secrets.choice(alphabet) for _ in range(self.key_length))
+    def generate_key(self, purpose: str, password: str, prefix: str = None) -> str:
+        """Generate a secure API-style key (e.g., sk-xxx...) and store it encrypted"""
+        # Use default prefix if not specified
+        if prefix is None:
+            prefix = self.default_prefix
+
+        # Generate secure random key using alphanumeric characters only (API-style)
+        alphabet = string.ascii_letters + string.digits
+        random_part = ''.join(secrets.choice(alphabet) for _ in range(self.key_length))
+        secure_key = f"{prefix}{random_part}"
         
         # Load existing data
         data = self._load_data()
